@@ -34,6 +34,7 @@ export default function Hero() {
     const render = () => {
       const frameIndex = Math.min(Math.round(seq.frame), frameCount - 1);
       const img = images[frameIndex];
+
       if (img && img.complete) {
         const ratio = Math.max(canvas.width / img.width, canvas.height / img.height);
         const x = (canvas.width - img.width * ratio) / 2;
@@ -50,6 +51,7 @@ export default function Hero() {
     images[0].onload = render;
 
     const resize = () => {
+      if (!canvas) return;
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       render();
@@ -58,24 +60,34 @@ export default function Hero() {
     resize();
 
     const getHoveredLink = (e: MouseEvent) => {
-      if (seq.frame < frameCount - 10) return null; // Only active at the end of the scroll
-      
       const { x, y, w, h } = currentLayout;
       if (w === 0 || h === 0) return null;
-      
       const px = (e.clientX - x) / w;
       const py = (e.clientY - y) / h;
-      
-      if (py >= 0.40 && py <= 0.95) {
-        if (px >= 0.15 && px <= 0.33) return 'https://github.com/Mouli24';
-        if (px > 0.33 && px <= 0.49) return 'https://www.linkedin.com/in/mouli-lohani-9a0032363/';
-        if (px > 0.49 && px <= 0.65) return 'https://discord.com/channels/@me';
-        if (px > 0.65 && px <= 0.85) return 'mailto:moulylohani@gmail.com';
+
+      if (seq.frame >= frameCount - 10) {
+        if (py >= 0.40 && py <= 0.95) {
+          if (px >= 0.15 && px <= 0.33) return 'https://github.com/Mouli24';
+          if (px > 0.33 && px <= 0.49) return 'https://www.linkedin.com/in/mouli-lohani-9a0032363/';
+          if (px > 0.49 && px <= 0.65) return 'https://discord.com/channels/@me';
+          if (px > 0.65 && px <= 0.85) return 'mailto:moulylohani@gmail.com';
+        }
+        return null;
       }
+
+      if (py >= 0.05 && py <= 0.48) {
+        if (px >= 0.05 && px <= 0.30) return 'https://github.com/Mouli24/weather-harvester-project';
+        if (px > 0.35 && px <= 0.65) return 'https://github.com/Mouli24/broken-codebase-env';
+        if (px > 0.70 && px <= 0.95) return 'https://github.com/Mouli24/Vyavan';
+      } else if (py > 0.50 && py <= 0.90) {
+        if (px >= 0.05 && px <= 0.30) return 'https://github.com/Mouli24/-Sustainable-Food-Tracker-';
+      }
+
       return null;
     };
 
     const handleMouseMove = (e: MouseEvent) => {
+      if (!canvas) return;
       canvas.style.cursor = getHoveredLink(e) ? 'pointer' : 'default';
     };
 
@@ -104,20 +116,7 @@ export default function Hero() {
         scrub: 1.5,
         pin: true,
       },
-      onUpdate: () => {
-        render();
-        const p = seq.frame / frameCount;
-        const grid = document.getElementById('project-grid-overlay');
-        if (grid && canvas) {
-          if (p > 0.25 && p < 0.85) {
-            gsap.to(grid, { opacity: 1, duration: 0.5, pointerEvents: 'auto' });
-            gsap.to(canvas, { filter: 'blur(12px) brightness(0.4)', duration: 0.5 });
-          } else {
-            gsap.to(grid, { opacity: 0, duration: 0.5, pointerEvents: 'none' });
-            gsap.to(canvas, { filter: 'blur(0px) brightness(1)', duration: 0.5 });
-          }
-        }
-      },
+      onUpdate: render,
     });
 
     return () => {
@@ -129,41 +128,9 @@ export default function Hero() {
     };
   }, []);
 
-  const projects = [
-    { name: "Weather Harvester", desc: "CLI tool for fetching weather data, caching and alerts", url: "https://github.com/Mouli24/weather-harvester-project" },
-    { name: "Broken Codebase Env", desc: "OpenEnv environment where an AI agent debugs and fixes Python code", url: "https://github.com/Mouli24/broken-codebase-env" },
-    { name: "Vyavan", desc: "SaaS product that helps B2B factories manage orders, track inventory, and communicate", url: "https://github.com/Mouli24/Vyavan" },
-    { name: "Sustainable Food Tracker", desc: "Checks the sustainability, nutrition value, and eco-impact using OpenFoodFacts API", url: "https://github.com/Mouli24/-Sustainable-Food-Tracker-" }
-  ];
-
   return (
     <section ref={containerRef} className="h-screen w-full relative bg-black overflow-hidden font-sans">
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover" />
-      
-      {/* Dynamic GSAP Overlay Grid */}
-      <div id="project-grid-overlay" className="absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none p-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl w-full">
-          {projects.map((proj, i) => (
-            <a 
-              key={i} 
-              href={proj.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="group relative bg-white/5 hover:bg-white/10 border border-white/20 p-8 rounded-2xl backdrop-blur-md transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)] flex flex-col justify-between"
-            >
-              <div>
-                <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-300 mb-3">{proj.name}</h3>
-                <p className="text-zinc-300 leading-relaxed text-sm">{proj.desc}</p>
-              </div>
-              <div className="mt-6 flex justify-end">
-                <span className="text-xs font-semibold uppercase tracking-wider text-blue-400 group-hover:text-blue-300 flex items-center gap-2">
-                  View Source <span className="text-lg">→</span>
-                </span>
-              </div>
-            </a>
-          ))}
-        </div>
-      </div>
     </section>
   );
 }
